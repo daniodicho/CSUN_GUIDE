@@ -33,12 +33,21 @@
         android:textAppearance="?android:attr/textAppearanceSmall" />
 
     <ImageView
+        android:id="@+id/direction"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_centerVertical="true"
+        android:src="@mipmap/red"/>
+
+    <ImageView
         android:id="@+id/pointer"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerHorizontal="true"
         android:layout_centerVertical="true"
         android:src="@mipmap/blue"/>
+
 
 
 </RelativeLayout>

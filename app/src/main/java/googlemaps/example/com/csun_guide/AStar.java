@@ -55,11 +55,11 @@ public class AStar {
 
                     // calculate the distance of the adjacent node from the source
                     adjacent.DistanceToSource = current.DistanceToSource +
-                        Point.distance(current, adjacent);
+                            current.distance(adjacent);
 
                     // Calculate the heuristic distance of the adjacent node to the goal
                     adjacent.DistanceToGoal =
-                    	Point.distance(current, adjacent) + Point.distance(current, destination);
+                            current.distance( adjacent) + current.distance(destination);
 
                     // Set the total cost of the adjacent node
                     adjacent.cost = adjacent.DistanceToSource + adjacent.DistanceToGoal;
@@ -71,7 +71,7 @@ public class AStar {
         open = sortByCost(open);
     }
     
-    while(Point.distance(current, source)!=0){
+    while(current.distance(source)!=0){
     	path.add(current);
     	current=current.PathPredecessor;
     }

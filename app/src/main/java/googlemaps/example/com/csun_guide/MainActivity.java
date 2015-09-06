@@ -39,6 +39,7 @@ import android.location.Location;
 import android.location.LocationManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Vibrator;
 import android.speech.RecognizerIntent;
 import android.speech.tts.TextToSpeech;
 import android.support.v4.app.FragmentActivity;
@@ -72,7 +73,6 @@ public class MainActivity extends FragmentActivity  implements SensorEventListen
     boolean pathSet = false;
     String output="";
 
-
     double lat=0;
     double lon=0;
     double oldLat=0;
@@ -91,10 +91,12 @@ public class MainActivity extends FragmentActivity  implements SensorEventListen
     float total;
     float counter;
     float compassAngle=0;
+    float directionAngle=0;
     Circle mapCircle;
     Point CurrentLocationPoint;
     LinkedList<Point> path;
 
+    Vibrator v;
     // Used for compass
     SensorManager sm;
     private Sensor mAccelerometer;
@@ -106,15 +108,20 @@ public class MainActivity extends FragmentActivity  implements SensorEventListen
     private float[] mR = new float[9];
     private float[] mOrientation = new float[3];
     private float mCurrentDegree = 0f;
-    ImageView iv;
+    ImageView blueArrow;
+    ImageView redArrow;
+    float time;
+    boolean vibrated = false;
+
+    Point test;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         coordinates = (TextView)findViewById(R.id.textView2);                 // top left text view used for debugging
-        iv = (ImageView)findViewById(R.id.pointer);								// image view for compass pointer
-
+        blueArrow = (ImageView)findViewById(R.id.pointer);								// image view for compass pointer
+        redArrow = (ImageView)findViewById(id.direction);
         // set up the sensor manager and sensors for the compass
         sm = (SensorManager)getSystemService(SENSOR_SERVICE);
         mAccelerometer = sm.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
@@ -128,14 +135,17 @@ public class MainActivity extends FragmentActivity  implements SensorEventListen
         map = ((SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map))
                 .getMap();          // initialize map
         map.setMyLocationEnabled(true);
-       // CurrentLocationPoint = new Point(0,0);
+        //     CurrentLocationPoint = new Point(0,0);
 
         // moves the camera of the map
         move();
 
+
+        v=(Vibrator) this.getSystemService(Context.VIBRATOR_SERVICE);
+
         // start the disclaimer activity  (needed for every app that uses google maps)
-    //    Intent i=new Intent(this,Disclaimer.class);
-   //     startActivity(i);
+        //    Intent i=new Intent(this,Disclaimer.class);
+        //     startActivity(i);
 
 
         // instantiate text to speech object
@@ -146,7 +156,7 @@ public class MainActivity extends FragmentActivity  implements SensorEventListen
         // To load text file
         InputStream input;
         try {
-            input = assetManager.open("text2.txt");
+            input = assetManager.open("data.txt");
             int size = input.available();
             byte[] buffer = new byte[size];
             input.read(buffer);
@@ -160,7 +170,9 @@ public class MainActivity extends FragmentActivity  implements SensorEventListen
             table = new Table(parts);
             // set all adjacents of the table
             table.setAllAdjacents();
-            //CurrentLocationPoint = table.find(1150);
+
+            //starting at jacaranda initially for testing
+            CurrentLocationPoint = table.find(60);
 
         } catch (IOException e) {
             // TODO Auto-generated catch block
@@ -168,7 +180,7 @@ public class MainActivity extends FragmentActivity  implements SensorEventListen
         }
 
         //path = AStar.aStarPathFinding(table.find(55), table.find(52));
-        //   map.addCircle(new CircleOptions().center(new LatLng(test.getLatitude(),test.getLongitude())).radius(2));
+        //map.addCircle(new CircleOptions().center(new LatLng(test.getLatitude(),test.getLongitude())).radius(2));
         //map.addCircle(new CircleOptions().center(new LatLng(path.get(1).latitude,path.get(1).longitude)));
 //        pathSet = true;
         drawLines();
@@ -182,6 +194,8 @@ public class MainActivity extends FragmentActivity  implements SensorEventListen
                 voicToText();
             }
         });
+
+        time = System.currentTimeMillis();
     }
 
     @Override
@@ -193,7 +207,6 @@ public class MainActivity extends FragmentActivity  implements SensorEventListen
     @Override
     public void onLocationChanged(Location loc) {
         // TODO Auto-generated method stub
-        LM.requestLocationUpdates(LocationManager.GPS_PROVIDER,1000,0,this);
         lat = loc.getLatitude();
         lon = loc.getLongitude();
         CurrentLocationPoint = new Point(lat,lon);
@@ -205,13 +218,12 @@ public class MainActivity extends FragmentActivity  implements SensorEventListen
             oldLat=lat;
             oldLon=lon;
         }
-        if((pathSet)&&(Point.distance(CurrentLocationPoint, path.getFirst())<0.00004)){
+        // decrease this 000.1 if it turned out to be too large
+        if((pathSet)&&(CurrentLocationPoint.distance(path.getFirst())<0.0001)){
             path.removeFirst();
             target=path.getFirst();
         }
-        if(pathSet){
-            speakOut(getOutput(total/counter,table.getAngle(CurrentLocationPoint, target)));
-        }
+
 /*        coordinates.setText("P1:"+table.getAngle(pt1, pt)+"\n"+
         		"P2:"+table.getAngle(pt2, pt)+"\n"+
         		"P3:"+table.getAngle(pt3, pt)+"\n"+
@@ -291,6 +303,18 @@ public class MainActivity extends FragmentActivity  implements SensorEventListen
     @Override
     public void onSensorChanged(SensorEvent event) {
         // TODO Auto-generated method stub
+
+        // Give feedback every 8 seconds
+        if(pathSet&&(System.currentTimeMillis()-time>8000)){
+            speakOut(getOutput(total/counter,table.getAngle(CurrentLocationPoint, target)));
+            time = System.currentTimeMillis();
+        }
+
+        if((Math.abs(compassAngle-directionAngle)<2)&&!vibrated){
+            v.vibrate(200);
+            speakOut("Move Forward");
+            vibrated = true;
+        }
         if (event.sensor == mAccelerometer) {
             System.arraycopy(event.values, 0, mLastAccelerometer, 0, event.values.length);
             mLastAccelerometerSet = true;
@@ -308,17 +332,19 @@ public class MainActivity extends FragmentActivity  implements SensorEventListen
             counter++;
             total+=azimuthInDegress;
             compassAngle = azimuthInDegress;
-            coordinates.setText(""+azimuthInDegress);
-            if(System.currentTimeMillis()%1000<2){
+            coordinates.setText(""+compassAngle);
+            if(System.currentTimeMillis()%1000<3){
                 compassAngle = total/counter;
-                iv.setRotation(compassAngle-90);
+                blueArrow.setRotation(compassAngle - 90);
                 total = azimuthInDegress;
                 counter = 1;
             }
             if(pathSet){
-                coordinates.setText("P1:"+table.getAngle(CurrentLocationPoint, target)+"\n"+
+                directionAngle = (float)table.getAngle(CurrentLocationPoint, target);
+                coordinates.setText("P1:" + directionAngle + "\n" +
 
-                        "Azimuth:"+total/counter+"\nTarget: "+target.id);
+                        "Azimuth:" + total / counter + "\nTarget: " + target.id + "\nDistance:" + CurrentLocationPoint.distance(target));
+                redArrow.setRotation(directionAngle-90);
             }
         }
     }
@@ -361,11 +387,19 @@ public class MainActivity extends FragmentActivity  implements SensorEventListen
                 speechText = text.get(0);
                 //	Log.d("TEXTTOSPEECH", "voice to text: " + speechText);
                 Log.d("TEXTTOSPEECH", "voice to text in onActivityResult " + speechText);
-
-                path = AStar.aStarPathFinding(table.findClosest(CurrentLocationPoint), table.findByName(speechText, CurrentLocationPoint.latitude, CurrentLocationPoint.longitude));
-                pathSet = true;
-                target=path.getFirst();
-                drawPath(path);
+                Point dest = table.findByName(speechText, CurrentLocationPoint.latitude, CurrentLocationPoint.longitude);
+                path = AStar.aStarPathFinding(table.findClosest(CurrentLocationPoint), dest);
+                speakOut("Navigating from "+ table.findClosest(CurrentLocationPoint).getName() + " to "+dest.getName());
+                if(CurrentLocationPoint==null){
+                    speakOut("Can't find your current location");
+                } else if (path.size() == 1 && path.getFirst().getName()!=dest.getName()){
+                    speakOut("Can't find path to "+speechText);
+                }
+                else{
+                    pathSet = true;
+                    target=path.getFirst();
+                    drawPath(path);
+                }
             }
         }
     }
@@ -411,23 +445,30 @@ public class MainActivity extends FragmentActivity  implements SensorEventListen
     }
 
     String getOutput(double compass, double angle){
-        if(Math.abs(compass-angle)<1){
+        if(Math.abs(compass-angle)<2){
             return "move forward";
         }
         else{
+            vibrated = false;
             String s = "turn ";
-            s+= (int)(compass-angle);
+
+          //  actual value no longer needed if we are using haptic feedback
+            //s+= (int)Math.abs(compass-angle);
             if(compass>angle){
-                s+=" left";
+                if(compass-angle<180)
+                    s+=" left";
+                else
+                    s+=" right";
             }
             else{
-                s+=" right";
+                if(angle-compass<180)
+                    s+=" right";
+                else
+                    s+=" left";
+
             }
             return s;
         }
     }
 }
-
-
-
    
