@@ -48,6 +48,14 @@
         android:layout_centerVertical="true"
         android:src="@mipmap/blue"/>
 
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="New Button"
+        android:id="@+id/button"
+        android:layout_below="@+id/textView2"
+        android:layout_alignLeft="@+id/direction"
+        android:layout_alignStart="@+id/direction" />
 
 
 </RelativeLayout>
