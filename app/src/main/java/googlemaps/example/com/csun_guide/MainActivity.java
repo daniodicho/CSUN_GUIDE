@@ -72,7 +72,7 @@ public class MainActivity extends FragmentActivity  implements SensorEventListen
 
     boolean pathSet = false;
     String output="";
-
+    //test
     double lat=0;
     double lon=0;
     double oldLat=0;
