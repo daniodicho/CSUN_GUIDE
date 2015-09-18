@@ -68,6 +68,8 @@ public class MainActivity extends FragmentActivity  implements SensorEventListen
        static Point pt6 = new Point(34.194038,-118.322634);
        static Point pt1 = new Point(34.193892,-118.322836);
        static Point pt3 = new Point(34.194048,-118.322634);*/
+
+        //test
     Point target;
 
     boolean pathSet = false;
