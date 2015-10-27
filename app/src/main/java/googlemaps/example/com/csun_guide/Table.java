@@ -1,5 +1,6 @@
 package googlemaps.example.com.csun_guide;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 
 
@@ -10,6 +11,7 @@ import java.util.LinkedList;
  */
 public class Table{
     Point points[];
+    ArrayList<Point> points5 = new ArrayList<Point>();
     int Count =0;
 
 
@@ -84,8 +86,19 @@ public class Table{
                 }
                 return points[closest];
             }
+
         }
         return new Point(0,"",0,0,new int[1]);
+    }
+
+    public boolean checkValidPath(String name) {
+
+        for (int i = 0; i < points.length; i++)
+            if (points[i].getName().toLowerCase().equals(name.toLowerCase())) {
+                return true;
+            }
+
+        return false;
     }
 
     public void setAllAdjacents(){
@@ -141,5 +154,18 @@ public class Table{
         return closest;
     }
 
+    public ArrayList<Point> findClosest5(Point p){
+        double distance = Double.MAX_VALUE;
+        Point closest=null;
+        for(int i=0;i<points.length;i++){
+            double currentDistance= p.distance(points[i]);
+            if(currentDistance<distance)
+            {
+                points5.add(points[i]);
+                distance=currentDistance;
+            }
+        }
+        return points5;
+    }
 
 }

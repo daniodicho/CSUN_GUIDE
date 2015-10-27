@@ -71,7 +71,7 @@ public class MainActivity extends FragmentActivity  implements SensorEventListen
 
         //test
     Point target;
-
+    ArrayList<Point> c5;
     boolean pathSet = false;
     String output="";
     //test
@@ -124,6 +124,7 @@ public class MainActivity extends FragmentActivity  implements SensorEventListen
         coordinates = (TextView)findViewById(R.id.textView2);                 // top left text view used for debugging
         blueArrow = (ImageView)findViewById(R.id.pointer);								// image view for compass pointer
         redArrow = (ImageView)findViewById(id.direction);
+        c5 = new ArrayList<Point>();
         // set up the sensor manager and sensors for the compass
         sm = (SensorManager)getSystemService(SENSOR_SERVICE);
         mAccelerometer = sm.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
@@ -391,24 +392,45 @@ public class MainActivity extends FragmentActivity  implements SensorEventListen
                 Log.d("TEXTTOSPEECH", "voice to text in onActivityResult " + speechText);
                 Point dest = table.findByName(speechText, CurrentLocationPoint.latitude, CurrentLocationPoint.longitude);
                 path = AStar.aStarPathFinding(table.findClosest(CurrentLocationPoint), dest);
-                speakOut("Navigating from "+ table.findClosest(CurrentLocationPoint).getName() + " to "+dest.getName());
-                if(CurrentLocationPoint==null){
-                    speakOut("Can't find your current location");
-                } else if (path.size() == 1 && path.getFirst().getName()!=dest.getName()){
-                    speakOut("Can't find path to "+speechText);
-                }
-                else{
+
+                boolean validPath = table.checkValidPath(speechText);
+                if(validPath){
+                    speakOut("Navigating from "+ table.findClosest(CurrentLocationPoint).getName() + " to "+dest.getName());
                     pathSet = true;
                     target=path.getFirst();
                     drawPath(path);
+                }else{
+                    c5 = table.findClosest5(dest);
+                    speakOut("Can't find path to "+speechText);
+                    speakOut("You're closest points are: "+ c5.get(0).getName());
+                    tts.playSilentUtterance(1000, TextToSpeech.QUEUE_ADD, null);
+                    speakOut(c5.get(1).getName());
+                    tts.playSilentUtterance(1000, TextToSpeech.QUEUE_ADD, null);
+                    speakOut(c5.get(2).getName());
+                    tts.playSilentUtterance(1000, TextToSpeech.QUEUE_ADD, null);
+                    speakOut(c5.get(3).getName());
+                    tts.playSilentUtterance(1000, TextToSpeech.QUEUE_ADD, null);
+                    speakOut(c5.get(4).getName());
+
                 }
+
+//                if(CurrentLocationPoint == null) {
+//                    speakOut("Can't find your current location");
+//                } else if (path.size() == 1 && path.getFirst().getName()!=dest.getName()){
+//                    speakOut("Can't find path to "+speechText);
+//                }
+//                else{
+//                    pathSet = true;
+//                    target=path.getFirst();
+//                    drawPath(path);
+//                }
             }
         }
     }
 
     private void speakOut(String text) {
         //while(speechText=="");
-        tts.speak(text, TextToSpeech.QUEUE_FLUSH, null);
+        tts.speak(text, TextToSpeech.QUEUE_ADD, null,null);
         Log.e("SPEECHTOTEXT", "Spoke: "+speechText);
 
     }
