@@ -466,6 +466,7 @@ public class MainActivity extends FragmentActivity  implements SensorEventListen
         super.onBackPressed();
         onDestroy();
         finish();
+
     }
 
     String getOutput(double compass, double angle){
