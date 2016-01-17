@@ -464,8 +464,9 @@ public class MainActivity extends FragmentActivity  implements SensorEventListen
 
     public void onBackPressed(){
         super.onBackPressed();
-        onDestroy();
-        finish();
+        Intent intent=new Intent(MainActivity.this,StartMenu.class);
+        startActivity(intent);
+
 
     }
 
