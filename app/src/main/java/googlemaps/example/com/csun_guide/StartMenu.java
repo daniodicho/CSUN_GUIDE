@@ -9,7 +9,6 @@ import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.os.Vibrator;
 import android.speech.RecognizerIntent;
-import android.speech.tts.TextToSpeech;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -20,6 +19,8 @@ import java.util.ArrayList;
 /**
  * Created by jm12232 on 1/16/2016.
  */
+
+//First window that shows up when user starts the app
 public class StartMenu  extends Activity
 
 {
@@ -39,6 +40,8 @@ public void onCreate(Bundle savedInstanceState)
     startApp();
 
 }
+//Starts the app and vibrates when you click on the botton
+    //Detects wether or not the app is connected to the internet
 
 public void startApp()
 {
